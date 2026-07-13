@@ -102,6 +102,8 @@ async function main(argv) {
       return statusCommand(flags);
     case "pack":
       return packCommand(flags);
+    case "status":
+      return statusCommand(flags);
     case "help":
     case "--help":
     case "-h":
@@ -609,6 +611,28 @@ async function packCommand(flags) {
   await zipDirectory(artifactRoot, outPath);
   console.log(`Packaged ${artifactRoot} → ${outPath}`);
 }
+}
+
+function redactToken(token) {
+  if (!token) return "(not set)";
+  if (token.length < 8) return token;
+  const keep = Math.max(2, Math.floor(token.length / 6));
+  const stars = token.length - keep * 2;
+  return token.slice(0, keep) + "*".repeat(stars) + token.slice(-keep);
+}
+
+async function statusCommand(flags) {
+  const settings = await loadSettings(flags.settings, settingsFromFlags(flags));
+  console.log("MergeOS URL:  " + (settings.mergeos && settings.mergeos.baseUrl || "(not set)"));
+  console.log("Token:        " + redactToken(settings.mergeos && settings.mergeos.token));
+  console.log("Worker ID:    " + (settings.worker && settings.worker.id || "(not set)"));
+  console.log("AI Provider:  " + (settings.ai && settings.ai.provider || "(not set)"));
+  if (settings.ai && settings.ai.command) {
+    console.log("AI Command:   " + settings.ai.command);
+  }
+  if (settings.workspace && settings.workspace.root) {
+    console.log("Workspace:    " + settings.workspace.root);
+  }
 }
 
 function parseFlags(args) {
@@ -1659,6 +1683,7 @@ Usage:
   mrgminner compare [--presets codex,claude] [--kind agent]
   mrgminner next [--kind agent] [--dry-run] [--claim] [--submit --pr-url <url>]
   mrgminner pack <task-id> [--output <dir>]
+  mrgminner status
 
   # Agent nodes + claim-block cluster
   mrgminner nodes [--online] [--role job|review|audit] [--json] [--mock]
@@ -1700,7 +1725,7 @@ module.exports = {
   main,
   packCommand,
   parseFlags,
-  readPackageInfo,
+  redactToken,
   selectNextTask,
   settingsFromFlags,
   versionCommand

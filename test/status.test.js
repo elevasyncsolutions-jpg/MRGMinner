@@ -30,3 +30,4 @@ test("redactToken fully masks short tokens", () => {
   assert.equal(redactToken("abcd"), "****");
   assert.equal(redactToken("ab"), "****");
 });
+});
