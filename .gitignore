@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.mergeide/
+.mrgminner/
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
