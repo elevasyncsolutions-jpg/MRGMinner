@@ -4,10 +4,12 @@ Contributors earn **MRG** via MergeOS after a PR is merged to **master**.
 
 ## Claim
 
-1. Star [MRGMinner](https://github.com/mergeos-bounties/MRGMinner) and [mergeos](https://github.com/mergeos-bounties/mergeos)
-2. Comment on the issue: `I claim this bounty`
-3. Open a PR with evidence (CLI output, screenshots, tests)
-4. Maintainer merges → credits MRG (25 / 50 / 100 / 200)
+1. **Follow** the org https://github.com/mergeos-bounties  
+2. **Star** https://github.com/mergeos-bounties/mergeos  
+3. **Star** https://github.com/mergeos-bounties/mergeos-contracts
+4. Comment on the issue: `I claim this bounty`
+5. Open a PR with evidence (CLI output, screenshots, tests)
+6. Maintainer merges → credits MRG (25 / 50 / 100 / 200)
 
 ## Scope ideas
 
