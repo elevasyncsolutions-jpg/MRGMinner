@@ -199,6 +199,14 @@ async function nextCommand(flags) {
     return;
   }
   console.log(`Selected ${task.id}: ${task.title}`);
+  if (flags.dryRun) {
+    const artifacts = await prepareTaskArtifacts(settings, task, {
+      workspaceRoot: flags.workspace
+    });
+    console.log(`\nPrompt file: ${artifacts.promptFile}`);
+    console.log(`Prompt:\n${artifacts.prompt}`);
+    return;
+  }
   const result = await runAIForTask(settings, task, {
     workspaceRoot: flags.workspace
   });
@@ -1240,7 +1248,7 @@ Usage:
   mrgminner claim <task-id> [--with-intent]
   mrgminner submit <task-id> --pr-url <url> [--with-intent]
   mrgminner compare [--presets codex,claude] [--kind agent]
-  mrgminner next [--kind agent] [--claim] [--submit --pr-url <url>]
+  mrgminner next [--kind agent] [--dry-run] [--claim] [--submit --pr-url <url>]
 
   # Agent nodes + claim-block cluster
   mrgminner nodes [--online] [--role job|review|audit] [--json] [--mock]
