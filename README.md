@@ -6,7 +6,7 @@
 
 **MRGMinner** (formerly **MergeIDE**) is a VS Code–style workspace bridge for **MergeOS** tasks. It lists funded work, builds an AI task prompt, runs the AI CLI you choose, reserves the worker lane, and submits review evidence — without releasing payout (accept stays with project owner/admin).
 
-**Product:** [mergeos-bounties/MRGMinner](https://github.com/mergeos-bounties/MRGMinner) · Platform: [mergeos.shop](https://mergeos.shop/)
+**Product:** [mergeos-bounties/MRGMinner](https://github.com/mergeos-bounties/MRGMinner) · Platform: [mergeos.shop](https://mergeos.shop/) · Funded project: **`prj_0428`**
 
 Extracted from the [mergeos](https://github.com/mergeos-bounties/mergeos) monorepo (`MergeIDE/`) into a standalone public product.
 
