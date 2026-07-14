@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "MRG Claim Workflow",
+    "subtitle": "Discover → pack → intent → claim/run → submit (no payout)",
+    "output": "workflow.html",
+    "viewBox": [720, 720]
+  },
+  "lanes": [
+    { "id": "discover", "label": "Discovery" },
+    { "id": "pack", "label": "Claim-block / Pack" },
+    { "id": "worker", "label": "Worker" },
+    { "id": "review", "label": "Review path" },
+    { "id": "payout", "label": "Payout (out of scope)" }
+  ],
+  "nodes": [
+    { "id": "market", "lane": "discover", "col": 0, "type": "cloud", "label": "market", "sublabel": "open bounties" },
+    { "id": "chain", "lane": "discover", "col": 2, "type": "database", "label": "chain", "sublabel": "token · proof · tip" },
+    { "id": "split", "lane": "pack", "col": 2, "type": "backend", "label": "split", "sublabel": "work packs", "tag": "job+review+audit" },
+    { "id": "intent", "lane": "pack", "col": 4, "type": "security", "label": "intent", "sublabel": "ledger_reference" },
+    { "id": "claim", "lane": "worker", "col": 2, "type": "frontend", "label": "claim", "sublabel": "--with-intent" },
+    { "id": "run", "lane": "worker", "col": 4, "type": "backend", "label": "run", "sublabel": "host AI CLI" },
+    { "id": "submit", "lane": "review", "col": 4, "type": "frontend", "label": "submit", "sublabel": "PR evidence" },
+    { "id": "accept", "lane": "payout", "col": 4, "type": "security", "label": "accept", "sublabel": "owner/admin only", "tag": "not by miner" }
+  ],
+  "edges": [
+    { "from": "market", "to": "chain", "variant": "default" },
+    { "from": "chain", "to": "split", "label": "tip + fleet", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelSegment": 1 },
+    { "from": "split", "to": "intent", "variant": "default" },
+    { "from": "intent", "to": "claim", "label": "bind pack", "variant": "security", "fromSide": "bottom", "toSide": "right", "route": "drop", "labelSegment": 1, "labelDx": 20, "labelDy": 10 },
+    { "from": "claim", "to": "run", "variant": "emphasis" },
+    { "from": "run", "to": "submit", "label": "PR + notes", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelSegment": 1, "labelDx": 18 },
+    { "from": "submit", "to": "accept", "label": "human review", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelSegment": 1, "labelDx": 22 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Public path",
+      "items": [
+        "demo / market / chain need no login",
+        "title MRG preferred over polluted reward_cents",
+        "verify walks previous_hash locally"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Miner duties",
+      "items": [
+        "claim --with-intent binds ledger tip",
+        "run uses host AI; Docker for safe cmds",
+        "submit attaches intent_hash evidence"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Hard boundary",
+      "items": [
+        "MRGMinner never releases payout",
+        "owner/admin accept is required",
+        "optional Solana releasePayout(ledgerReference)"
+      ]
+    }
+  ]
+}

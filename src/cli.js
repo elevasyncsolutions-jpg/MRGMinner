@@ -103,12 +103,45 @@ async function main(argv) {
     case "share":
     case "bandwidth":
       return shareCommand(flags);
+    case "version":
+    case "--version":
+    case "-V":
+      return versionCommand(flags);
     case "help":
     case "--help":
     case "-h":
       return help();
     default:
       throw new Error(`unknown command: ${command}`);
+  }
+}
+
+function versionCommand(flags = {}) {
+  const pkg = readPackageInfo();
+  const payload = {
+    name: pkg.name || "mrgminner",
+    displayName: pkg.displayName || "MRGMinner",
+    version: pkg.version || "0.0.0",
+    node: process.version,
+    platform: process.platform,
+    arch: process.arch
+  };
+  if (flags.json) {
+    console.log(JSON.stringify(payload, null, 2));
+    return payload;
+  }
+  console.log(`${payload.displayName} ${payload.version}`);
+  console.log(`node\t${payload.node}`);
+  console.log(`platform\t${payload.platform}/${payload.arch}`);
+  return payload;
+}
+
+function readPackageInfo() {
+  try {
+    const packagePath = path.join(__dirname, "..", "package.json");
+    return JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  } catch {
+    return { name: "mrgminner", displayName: "MRGMinner", version: "0.0.0" };
   }
 }
 
@@ -1552,6 +1585,7 @@ function help() {
   console.log(`MRGMinner — MergeOS task runner + discoverable MRG chain
 
 Usage:
+  mrgminner version [--json]
   mrgminner configure --mergeos-url https://mergeos.shop --provider claude --worker-id github:you
   mrgminner login --email you@example.com --password secret
   mrgminner ide [--host 127.0.0.1] [--port 17331] [--workspace .] [--no-open]
@@ -1604,6 +1638,8 @@ module.exports = {
   compareCommand,
   main,
   parseFlags,
+  readPackageInfo,
   selectNextTask,
-  settingsFromFlags
+  settingsFromFlags,
+  versionCommand
 };

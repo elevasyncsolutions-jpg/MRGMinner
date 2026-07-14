@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MRGMinner Architecture",
+    "subtitle": "CLI + IDE + Electron miner against MergeOS and Solana anchors",
+    "output": "architecture.html",
+    "viewBox": [1100, 720]
+  },
+  "components": [
+    { "id": "miner", "type": "external", "label": "Miner / Worker", "sublabel": "human or AI CLI", "pos": [40, 300], "size": [130, 64] },
+    { "id": "cli", "type": "backend", "label": "mrgminner CLI", "sublabel": "bin/mrgminner.js", "pos": [230, 160], "size": [140, 64], "tag": "claim · split" },
+    { "id": "ide", "type": "frontend", "label": "Local IDE", "sublabel": "HTTP UI :17331", "pos": [230, 300], "size": [140, 64] },
+    { "id": "electron", "type": "frontend", "label": "Electron App", "sublabel": "desktop window", "pos": [230, 440], "size": [140, 64] },
+    { "id": "ai", "type": "backend", "label": "Host AI CLI", "sublabel": "Codex / Claude / Grok", "pos": [450, 160], "size": [150, 64] },
+    { "id": "docker", "type": "cloud", "label": "Docker Sandbox", "sublabel": "/workspace mount", "pos": [450, 340], "size": [150, 64], "tag": "safe cmds only" },
+    { "id": "share", "type": "messagebus", "label": "Bandwidth Share", "sublabel": "TrucVPN exits", "pos": [450, 500], "size": [150, 64] },
+    { "id": "api", "type": "cloud", "label": "MergeOS API", "sublabel": "mergeos.shop", "pos": [700, 160], "size": [140, 64] },
+    { "id": "ledger", "type": "database", "label": "MRG Ledger", "sublabel": "hash-chain proof", "pos": [700, 320], "size": [140, 64] },
+    { "id": "market", "type": "database", "label": "Marketplace", "sublabel": "funded bounties", "pos": [700, 470], "size": [140, 64] },
+    { "id": "solana", "type": "security", "label": "Solana Program", "sublabel": "releasePayout", "pos": [920, 300], "size": [140, 64], "tag": "ledgerReference" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Local machine", "wraps": ["cli", "ide", "electron", "docker", "ai", "share"] },
+    { "kind": "security-group", "label": "Public MergeOS surface", "wraps": ["api", "ledger", "market"] }
+  ],
+  "connections": [
+    { "from": "miner", "to": "cli", "label": "commands", "variant": "emphasis", "fromSide": "top", "toSide": "left", "labelDx": -10, "labelDy": -10 },
+    { "from": "miner", "to": "ide", "fromSide": "right", "toSide": "left" },
+    { "from": "miner", "to": "electron", "fromSide": "bottom", "toSide": "left", "label": "desktop", "labelDy": 20 },
+    { "from": "cli", "to": "ai", "label": "run", "variant": "emphasis" },
+    { "from": "ide", "to": "ai", "fromSide": "top", "toSide": "bottom", "labelDy": -50 },
+    { "from": "electron", "to": "ide", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "labelDy": -40 },
+    { "from": "ide", "to": "docker", "label": "sandbox" },
+    { "from": "cli", "to": "api", "label": "HTTPS", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[640, 192]] },
+    { "from": "api", "to": "ledger", "fromSide": "bottom", "toSide": "top" },
+    { "from": "ledger", "to": "market", "fromSide": "bottom", "toSide": "top" },
+    { "from": "ledger", "to": "solana", "label": "bytes32 tip", "variant": "security", "labelDy": -14 },
+    { "from": "cli", "to": "share", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[300, 532]] },
+    { "from": "share", "to": "market", "variant": "dashed", "fromSide": "right", "toSide": "left", "label": "earnings", "labelDy": 14 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Surfaces",
+      "items": [
+        "CLI for chain discovery and claim/run/submit",
+        "Local IDE and Electron share one sandbox model",
+        "Bandwidth share is a separate MRG stream"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Safety",
+      "items": [
+        "Host AI edits workspace; Docker runs safe verify cmds",
+        "Tool never calls accept / payout release",
+        "Solana releasePayout stays with owner/admin"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Chain binding",
+      "items": [
+        "Claim packs bind job + review + audit + tip hash",
+        "intent_hash / pack_hash / ledger_reference in evidence",
+        "Local verify walks previous_hash links client-side"
+      ]
+    }
+  ]
+}

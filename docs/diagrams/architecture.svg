@@ -1,0 +1,143 @@
+<svg viewBox="0 0 1100 720" role="img" aria-label="MRGMinner Architecture — CLI + IDE + Electron miner against MergeOS and Solana anchors (architecture diagram)">
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Boundaries (behind everything) -->
+        <rect x="200" y="130" width="430" height="454" rx="12" class="c-region" stroke-width="1"/>
+        <text x="208" y="148" class="t-cloud" font-size="9" font-weight="600">Local machine</text>
+
+        <rect x="670" y="130" width="200" height="424" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="678" y="148" class="t-security" font-size="9" font-weight="600">Public MergeOS surface</text>
+
+        <!-- Connection paths (before components for correct z-order) -->
+        <path d="M 105 300 L 159.5 300 Q 167.5 300 167.5 292 L 167.5 200 Q 167.5 192 175.5 192 L 230 192" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 170 332 L 230 332" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 105 364 L 159.5 364 Q 167.5 364 167.5 372 L 167.5 464 Q 167.5 472 175.5 472 L 230 472" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 370 192 L 450 192" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 300 300 L 404.5 300 Q 412.5 300 412.5 292 L 412.5 232 Q 412.5 224 420.5 224 L 525 224" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 300 440 L 300 364" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 370 332 L 402 332 Q 410 332 410 340 L 410 364 Q 410 372 418 372 L 450 372" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 370 192 L 632 192 Q 640 192 648 192 L 700 192" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 770 224 L 770 320" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 770 384 L 770 470" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 840 352 L 872 352 Q 880 352 880 344 L 880 340 Q 880 332 888 332 L 920 332" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path d="M 300 224 L 300 524 Q 300 532 308 532 L 450 532" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 600 532 L 642 532 Q 650 532 650 524 L 650 510 Q 650 502 658 502 L 700 502" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+
+        <!-- Components -->
+        <rect x="40" y="300" width="130" height="64" rx="6" class="c-mask"/>
+        <rect x="40" y="300" width="130" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+        <text x="105" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Miner / Worker</text>
+        <text x="105" y="346" class="t-muted" font-size="9" text-anchor="middle">human or AI CLI</text>
+
+        <rect x="230" y="160" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="230" y="160" width="140" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="300" y="190" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mrgminner CLI</text>
+        <text x="300" y="206" class="t-muted" font-size="9" text-anchor="middle">bin/mrgminner.js</text>
+        <text x="300" y="216" class="t-backend" font-size="7" text-anchor="middle">claim · split</text>
+
+        <rect x="230" y="300" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="230" y="300" width="140" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="300" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Local IDE</text>
+        <text x="300" y="346" class="t-muted" font-size="9" text-anchor="middle">HTTP UI :17331</text>
+
+        <rect x="230" y="440" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="230" y="440" width="140" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="300" y="470" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Electron App</text>
+        <text x="300" y="486" class="t-muted" font-size="9" text-anchor="middle">desktop window</text>
+
+        <rect x="450" y="160" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="450" y="160" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="525" y="190" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Host AI CLI</text>
+        <text x="525" y="206" class="t-muted" font-size="9" text-anchor="middle">Codex / Claude / Grok</text>
+
+        <rect x="450" y="340" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="450" y="340" width="150" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="525" y="370" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Docker Sandbox</text>
+        <text x="525" y="386" class="t-muted" font-size="9" text-anchor="middle">/workspace mount</text>
+        <text x="525" y="396" class="t-cloud" font-size="7" text-anchor="middle">safe cmds only</text>
+
+        <rect x="450" y="500" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="450" y="500" width="150" height="64" rx="6" class="c-messagebus" stroke-width="1.5"/>
+        <text x="525" y="530" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Bandwidth Share</text>
+        <text x="525" y="546" class="t-muted" font-size="9" text-anchor="middle">TrucVPN exits</text>
+
+        <rect x="700" y="160" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="700" y="160" width="140" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="770" y="190" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">MergeOS API</text>
+        <text x="770" y="206" class="t-muted" font-size="9" text-anchor="middle">mergeos.shop</text>
+
+        <rect x="700" y="320" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="700" y="320" width="140" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="770" y="350" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">MRG Ledger</text>
+        <text x="770" y="366" class="t-muted" font-size="9" text-anchor="middle">hash-chain proof</text>
+
+        <rect x="700" y="470" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="700" y="470" width="140" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="770" y="500" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Marketplace</text>
+        <text x="770" y="516" class="t-muted" font-size="9" text-anchor="middle">funded bounties</text>
+
+        <rect x="920" y="300" width="140" height="64" rx="6" class="c-mask"/>
+        <rect x="920" y="300" width="140" height="64" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="990" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Solana Program</text>
+        <text x="990" y="346" class="t-muted" font-size="9" text-anchor="middle">releasePayout</text>
+        <text x="990" y="356" class="t-security" font-size="7" text-anchor="middle">ledgerReference</text>
+
+        <!-- Connection labels -->
+        <rect x="133.3" y="216" width="48.4" height="14" rx="3" class="c-mask"/>
+        <text x="157.5" y="226" class="t-backend" font-size="8" text-anchor="middle">commands</text>
+
+        <rect x="145.7" y="418" width="43.6" height="14" rx="3" class="c-mask"/>
+        <text x="167.5" y="428" class="t-muted" font-size="8" text-anchor="middle">desktop</text>
+        <rect x="395" y="172" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="410" y="182" class="t-backend" font-size="8" text-anchor="middle">run</text>
+
+
+        <rect x="388.2" y="332" width="43.6" height="14" rx="3" class="c-mask"/>
+        <text x="410" y="342" class="t-muted" font-size="8" text-anchor="middle">sandbox</text>
+        <rect x="653" y="172" width="34" height="14" rx="3" class="c-mask"/>
+        <text x="670" y="182" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
+
+
+        <rect x="848.6" y="308" width="62.8" height="14" rx="3" class="c-mask"/>
+        <text x="880" y="318" class="t-security" font-size="8" text-anchor="middle">bytes32 tip</text>
+
+        <rect x="625.8" y="511" width="48.4" height="14" rx="3" class="c-mask"/>
+        <text x="650" y="521" class="t-messagebus" font-size="8" text-anchor="middle">earnings</text>
+
+        <!-- Legend -->
+        <text x="40" y="691" class="t-primary" font-size="9" font-weight="600">Legend</text>
+        <rect x="40" y="696" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+        <text x="60" y="704" class="t-muted" font-size="8">External</text>
+        <rect x="138" y="696" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="158" y="704" class="t-muted" font-size="8">Backend</text>
+        <rect x="231" y="696" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+        <text x="251" y="704" class="t-muted" font-size="8">Frontend</text>
+        <rect x="329" y="696" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+        <text x="349" y="704" class="t-muted" font-size="8">Cloud</text>
+        <rect x="412" y="696" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+        <text x="432" y="704" class="t-muted" font-size="8">Message bus</text>
+        <rect x="525" y="696" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="545" y="704" class="t-muted" font-size="8">Database</text>
+        <rect x="623" y="696" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+        <text x="643" y="704" class="t-muted" font-size="8">Security</text>
+      </svg>

@@ -1,7 +1,7 @@
 {
   "name": "mrgminner",
   "displayName": "MRGMinner",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "author": "MergeOS / ThanhTrucSolutions",
   "description": "MRGMinner — MergeOS miner: MRG chain, claim packs, Solana anchors, and bandwidth-share stream (residential exits for TrucVPN).",

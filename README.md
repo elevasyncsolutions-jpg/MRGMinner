@@ -1,15 +1,34 @@
-﻿# MRGMinner
+# MRGMinner
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.17-blue.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-0.5.1-0E8A16.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.5.2-0E8A16.svg)](package.json)
+[![CI](https://github.com/mergeos-bounties/MRGMinner/actions/workflows/ci.yml/badge.svg)](https://github.com/mergeos-bounties/MRGMinner/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MRG](https://img.shields.io/badge/token-MRG-5319E7.svg)](https://scan.mergeos.shop)
 [![Solana](https://img.shields.io/badge/chain-Solana-9945FF.svg)](https://github.com/mergeos-bounties/mergeos-contracts)
 [![MergeOS](https://img.shields.io/badge/MergeOS-bounties-5319E7.svg)](https://github.com/mergeos-bounties)
 
-**MRGMinner** is the MergeOS **miner / task runner**: discover funded **MRG** work on the public marketplace and ledger, form **claim-block** clusters (job + review + audit + hash proof), **split** jobs into packs bound to the ledger tip, build **claim intents** (and optional Solana `ledgerReference`), claim/run/submit with your AI CLI â€” without releasing payout (accept stays with owner/admin).
+**MRGMinner** is the MergeOS **miner / task runner**: discover funded **MRG** work on the public marketplace and ledger, form **claim-block** clusters (job + review + audit + hash proof), **split** jobs into packs bound to the ledger tip, build **claim intents** (and optional Solana `ledgerReference`), then claim/run/submit with your AI CLI — without releasing payout (accept stays with owner/admin).
 
-**Product:** [mergeos-bounties/MRGMinner](https://github.com/mergeos-bounties/MRGMinner) Â· App: [mergeos.shop](https://mergeos.shop/) Â· Scan: [scan.mergeos.shop](https://scan.mergeos.shop/) Â· Contracts: [mergeos-contracts](https://github.com/mergeos-bounties/mergeos-contracts) Â· Funded: **`prj_0428`** Â· [Install guide](docs/INSTALL.md)
+**Product:** [mergeos-bounties/MRGMinner](https://github.com/mergeos-bounties/MRGMinner) · App: [mergeos.shop](https://mergeos.shop/) · Scan: [scan.mergeos.shop](https://scan.mergeos.shop/) · Contracts: [mergeos-contracts](https://github.com/mergeos-bounties/mergeos-contracts) · Funded: **`prj_0428`** · [Install guide](docs/INSTALL.md)
+
+---
+
+## Table of contents
+
+- [Highlights](#highlights)
+- [Screenshots](#screenshots)
+- [Quick start](#quick-start)
+- [Bandwidth share](#bandwidth-share--mrg-trucvpn)
+- [CLI reference](#cli-reference)
+- [MRG blockchain discovery](#mrg-blockchain-discovery)
+- [Claim workflow](#claim-block-work-split--discoverable-claim)
+- [Desktop app](#desktop-app)
+- [Diagrams](#diagrams)
+- [Repository layout](#repository-layout)
+- [Development](#development)
+- [MergeOS bounties](#mergeos-bounties)
+- [License](#license)
 
 ---
 
@@ -17,37 +36,33 @@
 
 | Capability | Description |
 | --- | --- |
-| **Chain discovery** | `token` Â· `proof` Â· `verify` Â· `market` Â· `chain` Â· `solana` â€” public APIs |
+| **Chain discovery** | `token` · `proof` · `verify` · `market` · `chain` · `solana` — public APIs |
 | **Correct MRG rewards** | Bounty amounts parsed from titles (`[25 MRG]`) when marketplace scores pollute `reward_cents` |
-| **Work split** | `split` â€” load-balanced packs across online job/review/audit nodes + ledger tip |
-| **Claim intents** | `intent` + `claim --with-intent` â€” `intent_hash` / `pack_hash` / `ledger_reference` |
-| **Solana anchors** | `solana` â€” program id, instruction map (`releasePayout`), bytes32 ledger reference |
-| **Local verify** | `verify` â€” walk `previous_hash` links client-side |
-| **IDE mode** | `mergeide ide` / `mrgminner ide` â€” local MergeIDE workspace for tasks, files, prompts, and guarded commands |
+| **Work split** | `split` — load-balanced packs across online job/review/audit nodes + ledger tip |
+| **Claim intents** | `intent` + `claim --with-intent` — `intent_hash` / `pack_hash` / `ledger_reference` |
+| **Solana anchors** | `solana` — program id, instruction map (`releasePayout`), bytes32 ledger reference |
+| **Local verify** | `verify` — walk `previous_hash` links client-side |
+| **IDE mode** | `mergeide ide` / `mrgminner ide` — local MergeIDE workspace for tasks, files, prompts, and guarded commands |
 | **Desktop app** | Electron app wraps the local IDE into a direct Windows/Linux desktop window |
 | **Docker sandbox** | IDE/Electron safe commands run through `docker run`; host AI receives Docker mount instructions for task verification |
 | **Work pools + AI test** | Funded and in-progress project groups filter tasks; AI CLI presets include Codex, Claude, Grok, and custom |
-| **Task runner** | `tasks` Â· `claim` Â· `run` Â· `submit` Â· `next` Â· `status` |
+| **Task runner** | `tasks` · `claim` · `run` · `submit` · `next` · `status` · `version` |
 | **Safety** | Never calls task **accept** / payout release |
-| **Bandwidth share** | `share start` â€” residential exit for [TrucVPN](https://github.com/mergeos-bounties/TrucVPN); earn **MRG** for relayed traffic |
+| **Bandwidth share** | `share start` — residential exit for [TrucVPN](https://github.com/mergeos-bounties/TrucVPN); earn **MRG** for relayed traffic |
 
 ---
 
-## Bandwidth share â†’ MRG (TrucVPN)
+## Screenshots
 
-Share your connection as a **residential exit**. TrucVPN clients route SOCKS5/HTTP through your node; you accrue MRG by the gigabyte (`mrg_per_gb`, default **5**).
+<p align="center">
+  <img src="docs/mergeide-screenshot.png" alt="MRGMinner IDE workspace" width="100%" />
+</p>
+<p align="center"><em>Local MergeIDE workspace — work pools, task run, Docker sandbox, live AI console</em></p>
 
-```powershell
-# Terminal A â€” sharer
-node .\bin\mrgminner.js share start --region vn --city "Ho Chi Minh" --port 17890
-node .\bin\mrgminner.js share earnings
-
-# Terminal B â€” VPN client (TrucVPN)
-trucvpn configure --share-url http://127.0.0.1:17890
-trucvpn connect --region vn
-```
-
-Discovery API: `GET /v1/health`, `GET /v1/exits`, `GET /v1/earnings`, `POST /v1/claim-mock`.
+<p align="center">
+  <img src="docs/mrgminner-screenshot.png" alt="MRGMinner product surface" width="100%" />
+</p>
+<p align="center"><em>MRGMinner product surface</em></p>
 
 ---
 
@@ -70,6 +85,7 @@ See [docs/INSTALL.md](docs/INSTALL.md) for detailed install steps.
 cd MRGMinner
 npm ci
 npm test
+node .\bin\mrgminner.js version
 node .\bin\mrgminner.js --help
 
 # Task execution in IDE/Electron requires Docker Desktop/Engine
@@ -117,8 +133,6 @@ The IDE also includes a local **Welcome AI runtime test** under `Local test task
 
 ### Desktop IDE workflow
 
-![MRGMinner IDE workspace resume view](docs/mergeide-screenshot.png)
-
 1. Launch the desktop app with `npm run electron -- --workspace .` or run the packaged Windows/Linux app.
 2. Start with **Local test tasks** and run **Welcome AI runtime test**. Funded tasks are gated until this local host-AI + Docker workspace test passes.
 3. Pick a funded or in-progress work pool. The task list shows funded reward, status, and task id.
@@ -130,6 +144,49 @@ The IDE also includes a local **Welcome AI runtime test** under `Local test task
 9. When a non-local task run exits `0`, MRGMinner stages code changes, excludes `.mergeide/`, creates a task branch, commits, pushes, creates a GitHub PR with `gh`, and adds a PR comment containing the task payload, changed files, diff stat, runner, prompt path, and host AI log path.
 
 Auto PR creation requires `git`, GitHub CLI (`gh auth status` must pass), and push permission to the task repository. If push or PR creation fails, the console logs the exact failing step and leaves the local branch/commit in the project checkout.
+
+---
+
+## Bandwidth share → MRG (TrucVPN)
+
+Share your connection as a **residential exit**. TrucVPN clients route SOCKS5/HTTP through your node; you accrue MRG by the gigabyte (`mrg_per_gb`, default **5**).
+
+```powershell
+# Terminal A — sharer
+node .\bin\mrgminner.js share start --region vn --city "Ho Chi Minh" --port 17890
+node .\bin\mrgminner.js share earnings
+
+# Terminal B — VPN client (TrucVPN)
+trucvpn configure --share-url http://127.0.0.1:17890
+trucvpn connect --region vn
+```
+
+Discovery API: `GET /v1/health`, `GET /v1/exits`, `GET /v1/earnings`, `POST /v1/claim-mock`.
+
+---
+
+## CLI reference
+
+| Command | Purpose |
+| --- | --- |
+| `version` | Print package version (use `--json` for structured payload) |
+| `ide` / `serve` | Launch the local MergeIDE workspace UI |
+| `configure` / `login` / `status` | Settings, auth, miner health |
+| `demo` / `live` | Full live smoke against public MergeOS APIs |
+| `tasks` / `prompt` / `run` / `claim` / `submit` / `next` | Task lifecycle |
+| `compare` | Multi-provider AI compare notes for a task |
+| `nodes` / `stats` / `block` | Agent fleet + claim-block |
+| `token` / `proof` / `verify` / `market` / `split` / `chain` / `intent` / `solana` | MRG chain discovery |
+| `share start` / `share status` / `share earnings` | Bandwidth share stream (TrucVPN) |
+
+Common flags: `--json` · `--mock` · `--strict` · `--out <file.json>` · `--project <prj_id>` · `--with-intent`
+
+```powershell
+mrgminner version
+mrgminner version --json
+mrgminner demo
+mrgminner next --dry-run
+```
 
 ---
 
@@ -172,14 +229,14 @@ Explore:
 
 ```text
 online job  +  online review  +  online audit  +  verified entry_hash
-                         â†“
+                         ↓
               claim-block (mrg_eligible)
-                         â†“
-     split â†’ pack per bounty (pack_hash â†” tip_hash â†” ledger_reference)
-                         â†“
-     intent â†’ claim --with-intent / submit --with-intent
-                         â†“
-     owner/admin accept  â†’  optional Solana releasePayout(ledgerReference)
+                         ↓
+     split → pack per bounty (pack_hash ↔ tip_hash ↔ ledger_reference)
+                         ↓
+     intent → claim --with-intent / submit --with-intent
+                         ↓
+     owner/admin accept  →  optional Solana releasePayout(ledgerReference)
 ```
 
 | Role | Agents | Duty |
@@ -197,13 +254,11 @@ mrgminner claim prj_0428:1 --with-intent
 
 Packs **rotate** online nodes so work is not stuck on a single agent triple. Each pack carries:
 
-- `pack_hash` â€” SHA-256 of task + block + tip + role assignment  
-- `ledger_tip_hash` / `ledger_reference` â€” bytes32 anchor for Solana  
-- `status` â€” `ready_to_claim` when block + tip + three roles are present  
+- `pack_hash` — SHA-256 of task + block + tip + role assignment  
+- `ledger_tip_hash` / `ledger_reference` — bytes32 anchor for Solana  
+- `status` — `ready_to_claim` when block + tip + three roles are present  
 
----
-
-## Claim / run / submit
+### Claim / run / submit
 
 ```powershell
 mrgminner claim <task-id> --with-intent
@@ -212,20 +267,6 @@ mrgminner submit <task-id> --pr-url https://github.com/org/repo/pull/1 --with-in
 ```
 
 `--with-intent` binds `intent_hash`, `pack_hash`, and ledger tip into agent-action evidence (discoverable on the live feed). **Payout is never released by this tool.**
-
----
-
-## CLI reference
-
-| Command | Purpose |
-| --- | --- |
-| `ide` / `serve` | Launch the local MergeIDE workspace UI |
-| `configure` / `login` / `status` | Settings, auth, miner health |
-| `tasks` / `prompt` / `run` / `claim` / `submit` / `next` | Task lifecycle |
-| `nodes` / `stats` / `block` | Agent fleet + claim-block |
-| `token` / `proof` / `verify` / `market` / `split` / `chain` / `intent` / `solana` | MRG chain discovery |
-
-Common flags: `--json` Â· `--mock` Â· `--strict` Â· `--out <file.json>` Â· `--project <prj_id>` Â· `--with-intent`
 
 ---
 
@@ -252,6 +293,30 @@ The desktop IDE uses the same runtime boundary as `mrgminner ide`: safe terminal
 
 ---
 
+## Diagrams
+
+System architecture and claim workflow — full width. Open HTML for dark/light theme toggle and export.
+
+### Architecture
+
+[Open interactive diagram](docs/diagrams/architecture.html)
+
+<p align="center">
+  <img src="docs/diagrams/architecture.svg" alt="MRGMinner architecture" width="100%" />
+</p>
+
+### Claim workflow
+
+[Open interactive diagram](docs/diagrams/workflow.html)
+
+<p align="center">
+  <img src="docs/diagrams/workflow.svg" alt="MRG claim workflow" width="100%" />
+</p>
+
+*Generated with [archify](https://github.com/tt-a1i).*
+
+---
+
 ## Repository layout
 
 ```text
@@ -266,9 +331,11 @@ MRGMinner/
     electron-main.js    # Electron desktop app entry
     extension.js        # VS Code bridge
     ide.js              # local browser IDE server
-    runner.js / prompt.js / settings.js
+    runner.js / prompt.js / settings.js / share.js
   test/
   docs/
+    diagrams/           # architecture + workflow (HTML + SVG)
+  .github/workflows/    # CI, Windows exe, Electron release
 ```
 
 ---
@@ -278,8 +345,9 @@ MRGMinner/
 ```powershell
 npm ci
 npm test
+node .\bin\mrgminner.js version
 npm run build:exe        # Windows standalone exe via pkg
-npm run build:portable   # exe + sha256 + metadata â†’ MRGMinner-Windows-x64.zip
+npm run build:portable   # exe + sha256 + metadata → MRGMinner-Windows-x64.zip
 ```
 
 Artifacts are written to `dist/`:
@@ -291,18 +359,21 @@ Artifacts are written to `dist/`:
 | `MRGMinner-Windows-x64.build.json` | Build metadata (commit, run ID, release URLs) |
 | `MRGMinner-Windows-x64.zip` | Portable package (exe + checksum + metadata) |
 
-Windows CI: [`.github/workflows/mrgminner-windows-exe.yml`](.github/workflows/mrgminner-windows-exe.yml)
+| Workflow | Purpose |
+| --- | --- |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Unit tests on Node 18/20/22 (push + PR) |
+| [`.github/workflows/mrgminner-windows-exe.yml`](.github/workflows/mrgminner-windows-exe.yml) | Windows portable exe release |
+| [`.github/workflows/mrgminner-electron-release.yml`](.github/workflows/mrgminner-electron-release.yml) | Electron desktop assets |
 
 ---
 
 ## MergeOS bounties
 
-Star â†’ claim issue â†’ PR to **master** â†’ MRG **25â€“200**.  
-See [docs/BOUNTY.md](docs/BOUNTY.md) Â· [mergeos](https://github.com/mergeos-bounties/mergeos).
+Star → claim issue → PR to **master** → MRG **25–200**.  
+See [docs/BOUNTY.md](docs/BOUNTY.md) · [mergeos](https://github.com/mergeos-bounties/mergeos).
 
 ---
 
 ## License
 
-MIT Â· MergeOS / ThanhTrucSolutions
-
+MIT · MergeOS / ThanhTrucSolutions
