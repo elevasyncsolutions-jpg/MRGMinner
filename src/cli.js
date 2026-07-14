@@ -37,6 +37,7 @@ const {
   summarizeTokenEconomy,
   verifyHashChain
 } = require("./chain");
+const { startShare, earningsReport, DEFAULT_MRG_PER_GB } = require("./share");
 
 async function main(argv) {
   const [command = "help", ...rest] = argv;
@@ -90,6 +91,9 @@ async function main(argv) {
       return solanaCommand(flags);
     case "status":
       return statusCommand(flags);
+    case "share":
+    case "bandwidth":
+      return shareCommand(flags);
     case "help":
     case "--help":
     case "-h":
@@ -97,6 +101,96 @@ async function main(argv) {
     default:
       throw new Error(`unknown command: ${command}`);
   }
+}
+
+/**
+ * Bandwidth-share stream (residential exit for TrucVPN).
+ * Subcommands via first positional or --start / flags:
+ *   mrgminner share start|stop|status|earnings
+ *   mrgminner share --start --region vn
+ */
+async function shareCommand(flags) {
+  const sub = String((flags._ && flags._[0]) || flags.action || "").toLowerCase();
+  if (sub === "earnings" || flags.earnings) {
+    const report = earningsReport();
+    if (flags.json) {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+    console.log("# MRGMinner bandwidth-share earnings");
+    console.log(`bytes_total\t${report.bytes_total}`);
+    console.log(`sessions\t${report.sessions}`);
+    console.log(`mrg_per_gb\t${report.mrg_per_gb}`);
+    console.log(`mrg_earned_total\t${report.mrg_earned_total}`);
+    console.log(`# Pair with TrucVPN: trucvpn connect --region <code>`);
+    return;
+  }
+  if (sub === "status") {
+    const report = earningsReport();
+    console.log(JSON.stringify({ stream: "bandwidth-share", ...report }, null, 2));
+    return;
+  }
+  if (sub === "stop") {
+    console.log("Share nodes run in the foreground — stop with Ctrl+C in the share start process.");
+    return;
+  }
+  if (sub === "start" || flags.start || !sub) {
+    const settings = await loadSettings(flags.settings, settingsFromFlags(flags)).catch(() => ({
+      mergeos: {},
+      worker: {}
+    }));
+    const workerId =
+      flags.workerId ||
+      flags["worker-id"] ||
+      (settings.worker && settings.worker.id) ||
+      "mrgminner:share-local";
+    const handle = await startShare({
+      host: flags.host || "127.0.0.1",
+      port: Number(flags.port || 17890),
+      socksPort: flags.socksPort ? Number(flags.socksPort) : undefined,
+      region: flags.region || "vn",
+      city: flags.city || "Ho Chi Minh",
+      workerId,
+      mrgPerGb: flags.mrgPerGb ? Number(flags.mrgPerGb) : DEFAULT_MRG_PER_GB,
+      advertiseHost: flags.advertiseHost || flags.host || "127.0.0.1"
+    });
+    const stats = handle.getStats();
+    console.log("# MRGMinner share started (bandwidth → MRG)");
+    console.log(`exit_id\t${stats.exit_id}`);
+    console.log(`control\t${stats.control}`);
+    console.log(`socks\t${stats.socks}`);
+    console.log(`region\t${stats.region}\t${stats.city}`);
+    console.log(`mrg_per_gb\t${stats.mrg_per_gb}`);
+    console.log(`# TrucVPN: trucvpn configure --share-url ${stats.control}`);
+    console.log(`#          trucvpn connect --region ${stats.region}`);
+    console.log("# Press Ctrl+C to stop and flush session earnings.");
+
+    const onSig = async () => {
+      console.log("\n# stopping share…");
+      await handle.stop();
+      const end = handle.getStats();
+      console.log(`session_bytes\t${end.bytes_total}`);
+      console.log(`session_mrg\t${end.mrg_earned_session}`);
+      process.exit(0);
+    };
+    process.on("SIGINT", onSig);
+    process.on("SIGTERM", onSig);
+
+    // heartbeat log every 30s
+    setInterval(() => {
+      const s = handle.getStats();
+      if (flags.quiet) {
+        return;
+      }
+      console.log(
+        `# share heartbeat bytes=${s.bytes_total} mrg_session=${s.mrg_earned_session} uptime=${s.uptime_sec}s`
+      );
+    }, 30000).unref?.();
+
+    await new Promise(() => {});
+    return;
+  }
+  throw new Error(`unknown share subcommand: ${sub || "(empty)"} — use start|status|earnings`);
 }
 
 async function configure(flags) {
@@ -1319,9 +1413,17 @@ Usage:
   mrgminner intent [task-id] [--json]           # claim intent + ledger_ref
   mrgminner solana [--json] [--mock]            # Solana program + ix map
 
+  # Bandwidth share stream (residential exit → earn MRG; pairs with TrucVPN)
+  mrgminner share start [--region vn] [--city "Ho Chi Minh"] [--port 17890]
+  mrgminner share status
+  mrgminner share earnings [--json]
+  # TrucVPN client: trucvpn configure --share-url http://127.0.0.1:17890
+  #                 trucvpn connect --region vn
+
 Claim-block: online job + review + audit + verified entry_hash → mrg_eligible.
 Work packs bind each bounty to block + ledger tip (+ Solana ledgerReference).
 Payout release stays with owner/admin accept (optional Solana releasePayout).
+Bandwidth share is a separate MRG stream: relay residential traffic for TrucVPN users.
 
 AI CLI placeholders:
   {{prompt}}  {{promptFile}}  {{taskFile}}  {{taskId}}

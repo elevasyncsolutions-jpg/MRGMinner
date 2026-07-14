@@ -6,9 +6,17 @@ const { spawn } = require("node:child_process");
 const { buildTaskPrompt } = require("./prompt");
 const { providerPreset } = require("./settings");
 
+function safePathSegment(id) {
+  return String(id || "task")
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 120) || "task";
+}
+
 async function prepareTaskArtifacts(settings, task, options = {}) {
   const workspaceRoot = resolveWorkspaceRoot(settings, options);
-  const artifactRoot = options.artifactRoot || path.join(workspaceRoot, ".mergeide", "tasks", task.id);
+  const artifactRoot =
+    options.artifactRoot || path.join(workspaceRoot, ".mergeide", "tasks", safePathSegment(task.id));
   await fs.mkdir(artifactRoot, { recursive: true });
   const taskFile = path.join(artifactRoot, "task.json");
   const promptFile = path.join(artifactRoot, "prompt.md");

@@ -1,7 +1,7 @@
 # MRGMinner
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.17-blue.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-0.4.0-0E8A16.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.5.0-0E8A16.svg)](package.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MRG](https://img.shields.io/badge/token-MRG-5319E7.svg)](https://scan.mergeos.shop)
 [![Solana](https://img.shields.io/badge/chain-Solana-9945FF.svg)](https://github.com/mergeos-bounties/mergeos-contracts)
@@ -25,6 +25,25 @@
 | **Local verify** | `verify` — walk `previous_hash` links client-side |
 | **Task runner** | `tasks` · `claim` · `run` · `submit` · `next` · `status` |
 | **Safety** | Never calls task **accept** / payout release |
+| **Bandwidth share** | `share start` — residential exit for [TrucVPN](https://github.com/mergeos-bounties/TrucVPN); earn **MRG** for relayed traffic |
+
+---
+
+## Bandwidth share → MRG (TrucVPN)
+
+Share your connection as a **residential exit**. TrucVPN clients route SOCKS5/HTTP through your node; you accrue MRG by the gigabyte (`mrg_per_gb`, default **5**).
+
+```powershell
+# Terminal A — sharer
+node .\bin\mrgminner.js share start --region vn --city "Ho Chi Minh" --port 17890
+node .\bin\mrgminner.js share earnings
+
+# Terminal B — VPN client (TrucVPN)
+trucvpn configure --share-url http://127.0.0.1:17890
+trucvpn connect --region vn
+```
+
+Discovery API: `GET /v1/health`, `GET /v1/exits`, `GET /v1/earnings`, `POST /v1/claim-mock`.
 
 ---
 
