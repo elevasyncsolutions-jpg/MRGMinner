@@ -10,7 +10,8 @@ const DEFAULT_SETTINGS = Object.freeze({
     upstream: "Code OSS / Visual Studio Code workflow"
   },
   mergeos: {
-    baseUrl: "http://localhost:8080",
+    // Live public MergeOS shop — discovery works without login.
+    baseUrl: "https://mergeos.shop",
     token: ""
   },
   ai: {

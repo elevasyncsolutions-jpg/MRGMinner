@@ -86,6 +86,9 @@ async function main(argv) {
       return intentCommand(flags);
     case "verify":
       return verifyCommand(flags);
+    case "demo":
+    case "live":
+      return demoCommand(flags);
     case "solana":
     case "contract":
       return solanaCommand(flags);
@@ -286,24 +289,41 @@ async function submitCommand(flags) {
 
 async function nextCommand(flags) {
   const settings = await loadSettings(flags.settings, settingsFromFlags(flags));
-  const tasks = await listTasks(settings);
+  let tasks = [];
+  let source = "auth";
+  try {
+    tasks = await listTasks(settings);
+  } catch (error) {
+    // Public dry-run path: pick from marketplace when not logged in.
+    if (!flags.dryRun) {
+      throw error;
+    }
+    source = "public-market";
+    const market = await getMarketplace(settings, 40);
+    const discovery = discoverMarketplace(market, { limit: 40 });
+    tasks = (discovery.open_bounties || []).map((b) => ({
+      id: b.id,
+      title: b.title || b.id,
+      status: "open",
+      required_worker_kind: b.kind === "hybrid" ? "hybrid" : b.kind === "agent" ? "agent" : "human",
+      suggested_agent_type: b.suggested_agent_type || "",
+      reward_cents: Math.round(Number(b.reward_mrg || 0) * 100),
+      project_id: b.project_id,
+      source: "marketplace"
+    }));
+  }
   const task = selectNextTask(tasks, flags);
   if (!task) {
     console.log("No open MergeOS task matched the current filters.");
     return;
   }
   if (flags.dryRun) {
+    if (source === "public-market") {
+      console.log("# next --dry-run via public marketplace (not logged in)");
+    }
     return dryRunNext(settings, task, flags);
   }
   console.log(`Selected ${task.id}: ${task.title}`);
-  if (flags.dryRun) {
-    const artifacts = await prepareTaskArtifacts(settings, task, {
-      workspaceRoot: flags.workspace
-    });
-    console.log(`\nPrompt file: ${artifacts.promptFile}`);
-    console.log(`Prompt:\n${artifacts.prompt}`);
-    return;
-  }
   const result = await runAIForTask(settings, task, {
     workspaceRoot: flags.workspace
   });
@@ -1315,6 +1335,59 @@ function printSolana(solana, source) {
   }
 }
 
+/**
+ * End-to-end live smoke against mergeos.shop public APIs (no login).
+ * Proves discovery + ledger verify + work split + claim-intent + optional share health.
+ */
+async function demoCommand(flags) {
+  const settings = await loadSettings(flags.settings, settingsFromFlags(flags));
+  const base = (settings.mergeos && settings.mergeos.baseUrl) || "https://mergeos.shop";
+  console.log(`# MRGMinner live demo · ${base}`);
+  console.log("");
+
+  console.log("## 1) status");
+  await statusCommand({ ...flags, mock: false });
+  console.log("");
+
+  console.log("## 2) token economy");
+  await tokenCommand({ ...flags, mock: false });
+  console.log("");
+
+  console.log("## 3) ledger verify (local hash walk)");
+  await verifyCommand({ ...flags, mock: false });
+  console.log("");
+
+  console.log("## 4) marketplace + split");
+  await marketCommand({ ...flags, mock: false });
+  console.log("");
+  await splitCommand({ ...flags, mock: false });
+  console.log("");
+
+  console.log("## 5) claim-block + first intent");
+  await blockCommand({ ...flags, mock: false });
+  console.log("");
+  const { discovery } = await loadChainBundle(flags);
+  const first = (discovery.marketplace.open_bounties || [])[0];
+  if (first) {
+    await intentCommand({ ...flags, _: [first.id], mock: false });
+  } else {
+    console.log("(no open bounties for intent)");
+  }
+  console.log("");
+
+  console.log("## 6) next --dry-run (public market if not logged in)");
+  await nextCommand({ ...flags, dryRun: true });
+  console.log("");
+
+  console.log("## 7) solana binding");
+  await solanaCommand({ ...flags, mock: false });
+  console.log("");
+
+  console.log("# demo complete — live public path OK");
+  console.log("# claim/run/submit still need: mrgminner login + claim <id> --with-intent");
+  console.log("# bandwidth share: mrgminner share start --region vn --port 17890");
+}
+
 async function statusCommand(flags) {
   if (flags.mock || flags.offline) {
     const discovery = mockChainDiscovery();
@@ -1390,6 +1463,7 @@ Usage:
   mrgminner configure --mergeos-url https://mergeos.shop --provider claude --worker-id github:you
   mrgminner login --email you@example.com --password secret
   mrgminner status [--json] [--mock]
+  mrgminner demo | live                             # full live smoke (public APIs)
   mrgminner tasks --open
   mrgminner prompt <task-id>
   mrgminner run <task-id> [--claim] [--submit --pr-url <url>]

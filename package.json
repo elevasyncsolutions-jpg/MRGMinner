@@ -1,9 +1,9 @@
 {
   "name": "mrgminner",
   "displayName": "MRGMinner",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
-  "description": "MRGMinner \u2014 MergeOS miner: MRG chain, claim packs, Solana anchors, and bandwidth-share stream (residential exits for TrucVPN).",
+  "description": "MRGMinner — MergeOS miner: MRG chain, claim packs, Solana anchors, and bandwidth-share stream (residential exits for TrucVPN).",
   "main": "./src/extension.js",
   "bin": {
     "mrgminner": "./bin/mrgminner.js",
@@ -67,7 +67,7 @@
       "properties": {
         "mergeide.mergeosUrl": {
           "type": "string",
-          "default": "http://localhost:8080",
+          "default": "https://mergeos.shop",
           "description": "MergeOS API base URL."
         },
         "mergeide.token": {
