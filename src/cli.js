@@ -1614,7 +1614,7 @@ async function statusCommand(flags) {
       mergeos_url: "http://localhost:8080",
       worker_id: "mrgminner:mock",
       provider: "mock",
-      token: redactToken("mrgminner:mock-redacted")
+      token: redactToken("mrgminner:placeholder-redacted") // placeholder
     };
     if (flags.json) {
       console.log(JSON.stringify(status, null, 2));
