@@ -2,6 +2,8 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
+
 const { spawn: spawnChild } = require("node:child_process");
 const {
   claimTask,
@@ -60,6 +62,8 @@ async function main(argv) {
       return claimCommand(flags);
     case "submit":
       return submitCommand(flags);
+    case "pack":
+      return packCommand(flags);
     case "compare":
       return compareCommand(flags);
     case "next":
@@ -699,6 +703,46 @@ function submissionFromFlags(flags) {
     throw new Error("--pr-url, --pull-request-url, --evidence-url, or --notes is required");
   }
   return payload;
+}
+
+async function packCommand(flags) {
+  const { ZipArchive } = await import("archiver");
+  const taskId = requiredPositional(flags, "task id");
+  const taskDir = resolveTaskDir(taskId, flags);
+  if (!taskDir) {
+    throw new Error(
+      `Task directory not found for ${taskId}. Run 'mrgminner run ${taskId}' or 'mrgminner prompt ${taskId}' first.`
+    );
+  }
+
+  const zipPath = path.resolve(`${taskId}.zip`);
+  const output = fs.createWriteStream(zipPath);
+  const archive = new ZipArchive({ zlib: { level: 9 } });
+
+  await new Promise((resolve, reject) => {
+    output.on("close", resolve);
+    output.on("error", reject);
+    archive.on("error", reject);
+    archive.pipe(output);
+    archive.directory(taskDir, false);
+    if (flags.prUrl) {
+      archive.append(`${flags.prUrl}\n`, { name: "pr-url.txt" });
+    }
+    archive.finalize();
+  });
+
+  const stats = fs.statSync(zipPath);
+  console.log(`Packaged ${zipPath} (${stats.size} bytes)`);
+}
+
+function resolveTaskDir(taskId, flags) {
+  const candidates = [];
+  const workspaceRoot = flags.workspace
+    ? path.resolve(flags.workspace)
+    : process.cwd();
+  candidates.push(path.join(workspaceRoot, ".mergeide", "tasks", taskId));
+  candidates.push(path.join(os.homedir(), ".mergeide", "tasks", taskId));
+  return candidates.find((dir) => fs.existsSync(dir) && fs.statSync(dir).isDirectory()) || null;
 }
 
 function agentActionFromSubmission(settings, task, submitted, flags, chainIntent = null) {
@@ -1603,6 +1647,7 @@ Usage:
   mrgminner run <task-id> [--claim] [--submit --pr-url <url>]
   mrgminner claim <task-id> [--with-intent]
   mrgminner submit <task-id> --pr-url <url> [--with-intent]
+  mrgminner pack <task-id> [--pr-url <url>]              # zip task artifacts
   mrgminner compare [--presets codex,claude] [--kind agent]
   mrgminner next [--kind agent] [--dry-run] [--claim] [--submit --pr-url <url>]
 
@@ -1644,6 +1689,7 @@ module.exports = {
   buildCompareNotes,
   compareCommand,
   main,
+  packCommand,
   parseFlags,
   readPackageInfo,
   selectNextTask,
