@@ -75,3 +75,34 @@ test("parseFlags defaults presets not set", () => {
   const flags = parseFlags([]);
   assert.equal(flags.presets, undefined);
 });
+
+test("packCommand zips task directory and prints path and size", async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pack-test-"));
+  const taskId = "test-pack-001";
+  const taskDir = path.join(tmpDir, ".mergeide", "tasks", taskId);
+  fs.mkdirSync(taskDir, { recursive: true });
+  fs.writeFileSync(path.join(taskDir, "task.json"), JSON.stringify({ id: taskId }), "utf8");
+  fs.writeFileSync(path.join(taskDir, "prompt.md"), "test prompt", "utf8");
+
+  const cwd = process.cwd;
+  process.cwd = () => tmpDir;
+
+  const { packCommand } = require("../src/cli");
+  const consoleLogs = [];
+  const origLog = console.log;
+  console.log = (...args) => consoleLogs.push(args.join(" "));
+
+  try {
+    await packCommand({ _: [taskId] });
+    const zipPath = path.join(tmpDir, `${taskId}.zip`);
+    assert.ok(fs.existsSync(zipPath), "zip file should exist");
+    const log = consoleLogs.join("\n");
+    assert.match(log, /Packaged/);
+    assert.match(log, /\.zip/);
+    assert.match(log, /\(\d+ bytes\)/);
+  } finally {
+    console.log = origLog;
+    process.cwd = cwd;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
