@@ -268,6 +268,18 @@ async function shareCommand(flags) {
       flags["worker-id"] ||
       (settings.worker && settings.worker.id) ||
       "mrgminner:share-local";
+    const shareToken = flags.shareToken || process.env.MRGMINNER_SHARE_TOKEN || "";
+    const tlsOptions = {};
+    if (flags.tlsKey) {
+      tlsOptions.keyPath = flags.tlsKey;
+    }
+    if (flags.tlsCert) {
+      tlsOptions.certPath = flags.tlsCert;
+    }
+    if (flags.tlsCa) {
+      tlsOptions.caPath = flags.tlsCa;
+    }
+
     const handle = await startShare({
       host: flags.host || "127.0.0.1",
       port: Number(flags.port || 17890),
@@ -277,13 +289,21 @@ async function shareCommand(flags) {
       regions: flags.regions,
       workerId,
       mrgPerGb: flags.mrgPerGb ? Number(flags.mrgPerGb) : DEFAULT_MRG_PER_GB,
-      advertiseHost: flags.advertiseHost || flags.host || "127.0.0.1"
+      advertiseHost: flags.advertiseHost || flags.host || "127.0.0.1",
+      tls: flags.tlsKey || flags.tlsCert ? tlsOptions : undefined,
+      shareToken
     });
     const stats = handle.getStats();
     console.log("# MRGMinner share started (bandwidth → MRG)");
     console.log(`exit_id\t${stats.exit_id}`);
     console.log(`control\t${stats.control}`);
     console.log(`socks\t${stats.socks}`);
+    if (stats.socks_tls) {
+      console.log(`socks_tls\tenabled`);
+    }
+    if (stats.auth_token) {
+      console.log(`auth_token\tenabled`);
+    }
     console.log(`region\t${stats.region}\t${stats.city}`);
     if (stats.advertised_regions && stats.advertised_regions.length > 1) {
       const listed = stats.advertised_regions
@@ -1668,6 +1688,7 @@ Usage:
 
   # Bandwidth share stream (residential exit → earn MRG; pairs with TrucVPN)
   mrgminner share start [--region vn] [--city "Ho Chi Minh"] [--regions "vn:Ho Chi Minh:70,sg:Singapore:30"] [--port 17890]
+  mrgminner share start [--tls-key key.pem --tls-cert cert.pem] [--share-token <token>]
   mrgminner share status
   mrgminner share earnings [--json]
   # TrucVPN client: trucvpn configure --share-url http://127.0.0.1:17890

@@ -168,6 +168,35 @@ Common region codes for `--region` / `--regions`:
 | `au` | Australia |
 | `ca` | Canada |
 
+## TLS Setup (Development)
+
+For testing TLS-wrapped SOCKS locally, generate a self-signed certificate:
+
+```powershell
+openssl req -x509 -newkey rsa:2048 -keyout dev-key.pem -out dev-cert.pem -days 365 -nodes -subj "/CN=localhost"
+```
+
+Then start the share node with TLS and optional auth token:
+
+```powershell
+mrgminner share start --tls-key dev-key.pem --tls-cert dev-cert.pem --share-token "my-token"
+```
+
+When `--tls-key` and `--tls-cert` are provided, the SOCKS proxy listens with TLS. Without these flags it falls back to plain TCP. Use `--tls-ca <path>` for an optional CA bundle (mutual TLS or custom chain).
+
+The `--share-token` flag (or `MRGMINNER_SHARE_TOKEN` env var) enables SOCKS5 username/password authentication (RFC 1929). When set, clients must provide the token as the password. Without it, anonymous SOCKS5 is allowed.
+
+**Production** should use real CA-signed certificates. Generate with your PKI or Let's Encrypt; pass the paths the same way.
+
+### New CLI flags
+
+| Flag | Env | Default | Description |
+| --- | --- | --- | --- |
+| `--tls-key <path>` | — | — | TLS private key PEM path |
+| `--tls-cert <path>` | — | — | TLS certificate PEM path |
+| `--tls-ca <path>` | — | — | Optional CA bundle PEM path |
+| `--share-token <token>` | `MRGMINNER_SHARE_TOKEN` | — | SOCKS5 auth token (RFC 1929) |
+
 ## Troubleshooting
 
 **Port already in use**  
