@@ -3,7 +3,9 @@
 const { describe, it, after, before } = require("node:test");
 const assert = require("node:assert/strict");
 const net = require("node:net");
+const tls = require("node:tls");
 const { startShare, mrgForBytes, earningsReport, DEFAULT_MRG_PER_GB } = require("../src/share");
+const { generateDevCerts } = require("./generate-dev-certs");
 
 describe("share bandwidth stream", () => {
   let handle;
@@ -149,6 +151,222 @@ describe("share bandwidth stream", () => {
     } finally {
       await share.stop();
       echoServer.close();
+    }
+  });
+
+  it("falls back to plain SOCKS when no tls options provided", async () => {
+    const h = await startShare({
+      host: "127.0.0.1",
+      port: 18200,
+      socksPort: 18201,
+      region: "us",
+      city: "Test",
+      workerId: "test:plain"
+    });
+    try {
+      const stats = h.getStats();
+      assert.equal(stats.socks_tls, false);
+      assert.equal(stats.auth_token, false);
+    } finally {
+      await h.stop();
+    }
+  });
+
+  it("creates TLS SOCKS server when tls options provided", async () => {
+    const certs = generateDevCerts();
+    let h;
+    try {
+      h = await startShare({
+        host: "127.0.0.1",
+        port: 18210,
+        socksPort: 18211,
+        region: "us",
+        city: "TlsCity",
+        workerId: "test:tls",
+        tls: { key: certs.key, cert: certs.cert }
+      });
+
+      const echoPort = 18212;
+      const echoServer = net.createServer((sock) => {
+        sock.on("data", (data) => sock.write(data));
+      });
+      await new Promise((resolve) => echoServer.listen(echoPort, "127.0.0.1", resolve));
+
+      try {
+        const stats = h.getStats();
+        assert.equal(stats.socks_tls, true);
+
+        const data = await new Promise((resolve, reject) => {
+          const client = tls.connect(
+            { host: "127.0.0.1", port: 18211, rejectUnauthorized: false },
+            () => {
+              client.write(Buffer.from([0x05, 0x01, 0x00]));
+            }
+          );
+
+          let buf = Buffer.alloc(0);
+          client.on("data", (chunk) => {
+            buf = Buffer.concat([buf, chunk]);
+            if (buf.length === 2 && buf[0] === 0x05 && buf[1] === 0x00) {
+              const req = Buffer.alloc(10);
+              req[0] = 0x05; req[1] = 0x01; req[2] = 0x00;
+              req[3] = 0x01;
+              req[4] = 127; req[5] = 0; req[6] = 0; req[7] = 1;
+              req.writeUInt16BE(echoPort, 8);
+              client.write(req);
+              buf = Buffer.alloc(0);
+              return;
+            }
+            if (buf.length >= 10 && buf[0] === 0x05 && buf[1] === 0x00) {
+              const payload = Buffer.from("tls socks5 works");
+              client.write(payload);
+              buf = Buffer.alloc(0);
+              return;
+            }
+            if (buf.length > 0) {
+              client.end();
+              resolve(buf.toString("utf8"));
+            }
+          });
+          client.on("error", reject);
+          setTimeout(() => reject(new Error("TLS SOCKS5 relay timeout")), 5000);
+        });
+
+        assert.equal(data, "tls socks5 works");
+      } finally {
+        echoServer.close();
+      }
+    } finally {
+      if (h) await h.stop();
+      certs.cleanup();
+    }
+  });
+
+  it("allows anonymous SOCKS5 when no token configured", async () => {
+    const h = await startShare({
+      host: "127.0.0.1",
+      port: 18220,
+      socksPort: 18221,
+      region: "us",
+      city: "Anon",
+      workerId: "test:anon"
+    });
+    try {
+      const echoPort = 18222;
+      const echoServer = net.createServer((sock) => {
+        sock.on("data", (data) => sock.write(data));
+      });
+      await new Promise((resolve) => echoServer.listen(echoPort, "127.0.0.1", resolve));
+
+      try {
+        const data = await new Promise((resolve, reject) => {
+          const client = net.connect({ host: "127.0.0.1", port: 18221 }, () => {
+            client.write(Buffer.from([0x05, 0x01, 0x00]));
+          });
+
+          let buf = Buffer.alloc(0);
+          client.on("data", (chunk) => {
+            buf = Buffer.concat([buf, chunk]);
+            if (buf.length === 2 && buf[0] === 0x05 && buf[1] === 0x00) {
+              const req = Buffer.alloc(10);
+              req[0] = 0x05; req[1] = 0x01; req[2] = 0x00;
+              req[3] = 0x01;
+              req[4] = 127; req[5] = 0; req[6] = 0; req[7] = 1;
+              req.writeUInt16BE(echoPort, 8);
+              client.write(req);
+              buf = Buffer.alloc(0);
+              return;
+            }
+            if (buf.length >= 10 && buf[0] === 0x05 && buf[1] === 0x00) {
+              const payload = Buffer.from("anonymous works");
+              client.write(payload);
+              buf = Buffer.alloc(0);
+              return;
+            }
+            if (buf.length > 0) {
+              client.end();
+              resolve(buf.toString("utf8"));
+            }
+          });
+          client.on("error", reject);
+          setTimeout(() => reject(new Error("anonymous SOCKS5 timeout")), 5000);
+        });
+
+        assert.equal(data, "anonymous works");
+      } finally {
+        echoServer.close();
+      }
+    } finally {
+      await h.stop();
+    }
+  });
+
+  it("rejects SOCKS5 connections without token when token configured", async () => {
+    const h = await startShare({
+      host: "127.0.0.1",
+      port: 18230,
+      socksPort: 18231,
+      region: "us",
+      city: "TokenTest",
+      workerId: "test:token",
+      shareToken: "my-secret-token"
+    });
+    try {
+      const rejected = await new Promise((resolve, reject) => {
+        const client = net.connect({ host: "127.0.0.1", port: 18231 }, () => {
+          client.write(Buffer.from([0x05, 0x01, 0x00]));
+        });
+
+        let buf = Buffer.alloc(0);
+        client.on("data", (chunk) => {
+          buf = Buffer.concat([buf, chunk]);
+          if (buf.length === 2 && buf[0] === 0x05 && buf[1] === 0xFF) {
+            resolve(true);
+            client.end();
+          }
+        });
+        client.on("error", () => resolve(true));
+        client.on("close", () => resolve(true));
+        setTimeout(() => reject(new Error("token rejection timeout")), 5000);
+      });
+
+      assert.equal(rejected, true);
+
+      const authed = await new Promise((resolve, reject) => {
+        const client = net.connect({ host: "127.0.0.1", port: 18231 }, () => {
+          client.write(Buffer.from([0x05, 0x01, 0x02]));
+        });
+
+        let buf = Buffer.alloc(0);
+        let stage = "greeting";
+        client.on("data", (chunk) => {
+          buf = Buffer.concat([buf, chunk]);
+          if (stage === "greeting" && buf.length === 2 && buf[0] === 0x05 && buf[1] === 0x02) {
+            const username = "user";
+            const password = "my-secret-token";
+            const auth = Buffer.alloc(3 + username.length + password.length);
+            auth[0] = 0x01;
+            auth[1] = username.length;
+            auth.write(username, 2, "utf8");
+            auth[2 + username.length] = password.length;
+            auth.write(password, 3 + username.length, "utf8");
+            client.write(auth);
+            buf = Buffer.alloc(0);
+            stage = "authed";
+            return;
+          }
+          if (stage === "authed" && buf.length === 2 && buf[0] === 0x01 && buf[1] === 0x00) {
+            resolve(true);
+            client.end();
+          }
+        });
+        client.on("error", reject);
+        setTimeout(() => reject(new Error("token auth timeout")), 5000);
+      });
+
+      assert.equal(authed, true);
+    } finally {
+      await h.stop();
     }
   });
 });

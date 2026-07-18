@@ -12,6 +12,7 @@
 
 const http = require("node:http");
 const net = require("node:net");
+const tls = require("node:tls");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -140,8 +141,8 @@ function normalizeShareRegions(options, defaults) {
  * Minimal SOCKS5 server that dials destinations directly from the sharer's network
  * (residential IP of the host). This is the "share path" TrucVPN tunnels through.
  */
-function createShareSocksServer({ host, port, onBytes }) {
-  const server = net.createServer((client) => {
+function createShareSocksServer({ host, port, onBytes, tls: tlsOpts, token }) {
+  const connectionHandler = (client) => {
     let buf = Buffer.alloc(0);
     let stage = "greeting";
 
@@ -164,9 +165,43 @@ function createShareSocksServer({ host, port, onBytes }) {
         if (buf.length < 2 + n) {
           return;
         }
-        client.write(Buffer.from([0x05, 0x00]));
-        buf = buf.subarray(2 + n);
-        stage = "request";
+        if (token) {
+          const methods = buf.subarray(2, 2 + n);
+          if (!methods.includes(0x02)) {
+            client.write(Buffer.from([0x05, 0xFF]));
+            return fail();
+          }
+          client.write(Buffer.from([0x05, 0x02]));
+          buf = buf.subarray(2 + n);
+          stage = "auth";
+        } else {
+          client.write(Buffer.from([0x05, 0x00]));
+          buf = buf.subarray(2 + n);
+          stage = "request";
+        }
+      }
+      if (stage === "auth") {
+        if (buf.length < 2) {
+          return;
+        }
+        const ulen = buf[1];
+        if (buf.length < 2 + ulen + 1) {
+          return;
+        }
+        const plenOffset = 2 + ulen;
+        const plen = buf[plenOffset];
+        if (buf.length < plenOffset + 1 + plen) {
+          return;
+        }
+        const password = buf.subarray(plenOffset + 1, plenOffset + 1 + plen).toString("utf8");
+        buf = Buffer.alloc(0);
+        if (password === token) {
+          client.write(Buffer.from([0x01, 0x00]));
+          stage = "request";
+        } else {
+          client.write(Buffer.from([0x01, 0x01]));
+          return fail();
+        }
       }
       if (stage !== "request") {
         return;
@@ -218,7 +253,18 @@ function createShareSocksServer({ host, port, onBytes }) {
       client.on("close", () => remote.destroy());
       remote.on("close", () => client.destroy());
     });
-  });
+  };
+
+  const serverOpts = {};
+  if (tlsOpts && tlsOpts.key && tlsOpts.cert) {
+    serverOpts.key = tlsOpts.key;
+    serverOpts.cert = tlsOpts.cert;
+    if (tlsOpts.ca) {
+      serverOpts.ca = tlsOpts.ca;
+    }
+  }
+  const useTls = Boolean(serverOpts.key && serverOpts.cert);
+  const server = useTls ? tls.createServer(serverOpts, connectionHandler) : net.createServer(connectionHandler);
 
   return new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -361,13 +407,36 @@ async function startShare(options = {}) {
     }
   };
 
+  const shareToken = options.shareToken || options.token || process.env.MRGMINNER_SHARE_TOKEN || "";
+
+  let tlsConfig = null;
+  if (options.tls) {
+    if (options.tls.key && options.tls.cert) {
+      tlsConfig = { key: options.tls.key, cert: options.tls.cert, ca: options.tls.ca };
+    } else if (options.tls.keyPath && options.tls.certPath) {
+      try {
+        tlsConfig = {
+          key: fs.readFileSync(options.tls.keyPath, "utf8"),
+          cert: fs.readFileSync(options.tls.certPath, "utf8"),
+        };
+        if (options.tls.caPath) {
+          tlsConfig.ca = fs.readFileSync(options.tls.caPath, "utf8");
+        }
+      } catch (err) {
+        console.warn(`# TLS cert load failed: ${err.message}. Falling back to plain SOCKS.`);
+      }
+    }
+  }
+
   // wrap socks to count connections
   const socksServer = await createShareSocksServer({
     host,
     port: socksPort,
     onBytes: (dir, n) => {
       onBytes(dir, n);
-    }
+    },
+    tls: tlsConfig,
+    token: shareToken || null
   });
 
   const meta = {
@@ -407,6 +476,8 @@ async function startShare(options = {}) {
       mrg_earned_lifetime: lifetime.mrg_earned_total || 0,
       control: `http://${host}:${controlPort}`,
       socks: `${host}:${socksPort}`,
+      socks_tls: Boolean(tlsConfig && tlsConfig.key && tlsConfig.cert),
+      auth_token: Boolean(shareToken),
       stream: "bandwidth-share"
     };
   };
@@ -425,6 +496,8 @@ async function startShare(options = {}) {
     pid: process.pid,
     control: `http://${host}:${controlPort}`,
     socks: `${host}:${socksPort}`,
+    socks_tls: Boolean(tlsConfig && tlsConfig.key && tlsConfig.cert),
+    auth_token: Boolean(shareToken),
     meta,
     started_at: new Date().toISOString()
   };
