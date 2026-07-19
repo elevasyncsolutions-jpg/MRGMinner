@@ -2,6 +2,7 @@
 
 const { describe, it, after, before } = require("node:test");
 const assert = require("node:assert/strict");
+const net = require("node:net");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
