@@ -2,6 +2,7 @@
 
 const { describe, it, after, before } = require("node:test");
 const assert = require("node:assert/strict");
+const net = require("node:net");
 const { startShare, mrgForBytes, earningsReport, DEFAULT_MRG_PER_GB, postEarningsToLedger } = require("../src/share");
 
 describe("share bandwidth stream", () => {
